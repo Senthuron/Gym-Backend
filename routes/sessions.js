@@ -5,7 +5,8 @@ const {
     getSessions,
     createSession,
     updateSession,
-    cancelSession
+    cancelSession,
+    deleteSession
 } = require('../controllers/sessionController');
 const validate = require('../middleware/validate');
 const { createSessionSchema } = require('../validators/sessionValidator');
@@ -24,5 +25,8 @@ router.put('/:id', requireAdmin, updateSession);
 
 // PUT /api/sessions/:id/cancel
 router.put('/:id/cancel', requireAdmin, cancelSession);
+
+// DELETE /api/sessions/:id
+router.delete('/:id', requireAdmin, deleteSession);
 
 module.exports = router;

@@ -56,7 +56,7 @@ const getMembers = async (req, res) => {
             if (user.role === 'member' && memberMap.has(userId)) {
                 const memberData = memberMap.get(userId);
                 return {
-                    _id: user._id,
+                    _id: memberData._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
@@ -76,7 +76,7 @@ const getMembers = async (req, res) => {
             } else if (user.role === 'trainer' && trainerMap.has(userId)) {
                 const trainerData = trainerMap.get(userId);
                 return {
-                    _id: user._id,
+                    _id: trainerData._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
@@ -132,11 +132,18 @@ const getMembers = async (req, res) => {
             if (status === 'expired') {
                 filteredUsers = usersWithDetails.filter(u => u.role === 'member' && !u.isActive);
             } else if (status === 'active') {
-                filteredUsers = usersWithDetails.filter(u => u.status === 'active' || (u.isActive !== false && u.status !== 'pending'));
+                // Include if status is explicitly active (case-insensitive)
+                // OR if status is NOT inactive/pending AND membership is active
+                filteredUsers = usersWithDetails.filter(u => {
+                    const s = (u.status || '').toLowerCase();
+                    if (s === 'active') return true;
+                    if (s === 'inactive' || s === 'pending') return false;
+                    return u.isActive !== false; // Fallback for undefined status
+                });
             } else if (status === 'inactive') {
-                filteredUsers = usersWithDetails.filter(u => u.status === 'inactive' || (u.isActive === false && u.status !== 'pending'));
+                filteredUsers = usersWithDetails.filter(u => (u.status || '').toLowerCase() === 'inactive');
             } else if (status === 'pending') {
-                filteredUsers = usersWithDetails.filter(u => u.status === 'pending');
+                filteredUsers = usersWithDetails.filter(u => (u.status || '').toLowerCase() === 'pending');
             }
         }
 
@@ -556,10 +563,16 @@ const deleteMember = async (req, res) => {
             member = await Member.findById(id);
             if (member) {
                 user = await User.findById(member.user);
+            } else {
+                // Fallback: Try to find by Trainer ID
+                trainer = await Trainer.findById(id);
+                if (trainer) {
+                    user = await User.findById(trainer.user);
+                }
             }
         }
 
-        if (!user && !member) {
+        if (!user && !member && !trainer) {
             return res.status(404).json({
                 success: false,
                 message: 'User/Member not found'

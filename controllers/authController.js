@@ -250,7 +250,7 @@ const login = async (req, res) => {
 // @access  Public
 const forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
+        let { email } = req.body;
 
         // Validate input
         if (!email) {
@@ -274,11 +274,11 @@ const forgotPassword = async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         // Delete any existing OTPs for this email
-        await OTP.deleteMany({ email: email.toLowerCase() });
+        await OTP.deleteMany({ email });
 
         // Save OTP to database
         await OTP.create({
-            email: email.toLowerCase(),
+            email,
             otp,
             expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
         });
@@ -304,7 +304,7 @@ const forgotPassword = async (req, res) => {
 // @access  Public
 const verifyOTP = async (req, res) => {
     try {
-        const { email, otp } = req.body;
+        let { email, otp } = req.body;
 
         // Validate input
         if (!email || !otp) {
@@ -316,8 +316,8 @@ const verifyOTP = async (req, res) => {
 
         // Find OTP
         const otpRecord = await OTP.findOne({
-            email: email.toLowerCase(),
-            otp: otp.toString()
+            email: email.trim().toLowerCase(),
+            otp: otp.toString().trim()
         });
 
         if (!otpRecord) {
@@ -358,7 +358,7 @@ const verifyOTP = async (req, res) => {
 // @access  Public
 const resetPassword = async (req, res) => {
     try {
-        const { email, otp, newPassword, confirmPassword } = req.body;
+        let { email, otp, newPassword, confirmPassword } = req.body;
 
         // Validate input
         if (!email || !otp || !newPassword || !confirmPassword) {
@@ -378,8 +378,8 @@ const resetPassword = async (req, res) => {
 
         // Find and verify OTP
         const otpRecord = await OTP.findOne({
-            email: email.toLowerCase(),
-            otp: otp.toString(),
+            email: email.trim().toLowerCase(),
+            otp: otp.toString().trim(),
             verified: true
         });
 
@@ -400,7 +400,7 @@ const resetPassword = async (req, res) => {
         }
 
         // Find user
-        const user = await User.findOne({ email: email.toLowerCase() });
+        const user = await User.findOne({ email: email.trim().toLowerCase() });
 
         if (!user) {
             return res.status(404).json({

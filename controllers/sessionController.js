@@ -21,7 +21,14 @@ const getSessions = async (req, res) => {
 
         // Filter by trainer
         if (trainer) {
-            query.trainer = trainer;
+            // Check if the ID provided is a User ID that belongs to a Trainer
+            const Trainer = require('../models/Trainer');
+            const trainerDoc = await Trainer.findOne({ user: trainer });
+            if (trainerDoc) {
+                query.trainer = trainerDoc._id;
+            } else {
+                query.trainer = trainer;
+            }
         }
 
         // Filter by status
@@ -189,9 +196,41 @@ const cancelSession = async (req, res) => {
     }
 };
 
+// @desc    Delete session
+// @route   DELETE /api/sessions/:id
+// @access  Protected
+const deleteSession = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const session = await Session.findById(id);
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                message: 'Session not found'
+            });
+        }
+
+        await session.deleteOne();
+
+        res.status(200).json({
+            success: true,
+            message: 'Session deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete session error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting session'
+        });
+    }
+};
+
 module.exports = {
     getSessions,
     createSession,
     updateSession,
-    cancelSession
+    cancelSession,
+    deleteSession
 };

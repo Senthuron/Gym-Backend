@@ -9,7 +9,8 @@ const otpSchema = new mongoose.Schema({
     },
     otp: {
         type: String,
-        required: [true, 'OTP is required']
+        required: [true, 'OTP is required'],
+        trim: true
     },
     verified: {
         type: Boolean,

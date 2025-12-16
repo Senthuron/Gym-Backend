@@ -27,10 +27,18 @@ const getAdminStats = async (req, res) => {
             date: { $gte: new Date(), $lte: nextWeek }
         });
 
-        // Calculate overall attendance percentage (simplified)
+        // Calculate overall attendance percentage
+        // Average class fill = (Total Attendance / Total Capacity of Past Sessions) * 100
+        const pastSessions = await Session.find({
+            date: { $lt: new Date() }
+        });
+
+        const totalCapacity = pastSessions.reduce((acc, session) => acc + (session.capacity || 0), 0);
         const totalAttendance = await Attendance.countDocuments({ isPresent: true });
-        // This percentage calculation is tricky without total possible attendance. 
-        // For now, let's just return the count.
+
+        const attendancePercentage = totalCapacity > 0
+            ? Math.round((totalAttendance / totalCapacity) * 100)
+            : 0;
 
         res.status(200).json({
             success: true,
@@ -39,7 +47,8 @@ const getAdminStats = async (req, res) => {
                 activeMembers,
                 expiringMembers,
                 weeklyClasses,
-                totalAttendance
+                totalAttendance,
+                attendancePercentage
             }
         });
     } catch (error) {
