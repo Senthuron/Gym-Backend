@@ -11,6 +11,11 @@ const attendanceRoutes = require('./routes/attendance');
 const dashboardRoutes = require('./routes/dashboard');
 const trainerRoutes = require('./routes/trainers');
 const userRoutes = require('./routes/users');
+const employeeRoutes = require('./routes/employees');
+const employeeAttendanceRoutes = require('./routes/employeeAttendance');
+const dietPlanRoutes = require('./routes/dietPlanRoutes');
+const workoutPlanRoutes = require('./routes/workoutPlanRoutes');
+const feedbackRoutes = require('./routes/feedback');
 
 // Initialize express app
 const app = express();
@@ -23,19 +28,19 @@ const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
+
         // In development, allow any localhost origin
         if (process.env.NODE_ENV !== 'production') {
             if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
                 return callback(null, true);
             }
         }
-        
+
         // In production, check against allowed origins
-        const allowedOrigins = process.env.FRONTEND_URL 
+        const allowedOrigins = process.env.FRONTEND_URL
             ? process.env.FRONTEND_URL.split(',')
             : ['http://localhost:3000', 'http://localhost:3001'];
-        
+
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
@@ -75,6 +80,11 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/trainers', trainerRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/employee-attendance', employeeAttendanceRoutes);
+app.use('/api/diet-plans', dietPlanRoutes);
+app.use('/api/workout-plans', workoutPlanRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // 404 handler
 app.use((req, res) => {

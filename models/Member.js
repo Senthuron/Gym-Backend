@@ -23,6 +23,11 @@ const memberSchema = new mongoose.Schema({
         required: [true, 'Phone number is required'],
         trim: true
     },
+    gender: {
+        type: String,
+        required: [true, 'Gender is required'],
+        enum: ['Male', 'Female', 'Others']
+    },
     age: {
         type: Number,
         min: [1, 'Age must be at least 1'],
@@ -64,7 +69,7 @@ const memberSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'pending'],
+        enum: ['active', 'Deactive', 'pending'],
         default: 'active'
     },
     nextBillingDate: {
@@ -76,6 +81,27 @@ const memberSchema = new mongoose.Schema({
     totalAttendance: {
         type: Number,
         default: 0
+    },
+    workoutPlan: {
+        weeklySchedule: [{
+            day: String,
+            exercises: [{
+                name: String,
+                sets: String,
+                reps: String,
+                notes: String
+            }]
+        }],
+        trainerNotes: String
+    },
+    dietPlan: {
+        dietChart: String, // Text or URL to PDF
+        mealTiming: [{
+            meal: String,
+            time: String,
+            notes: String
+        }],
+        nutritionNotes: String
     }
 }, {
     timestamps: true,

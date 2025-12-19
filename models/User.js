@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         enum: ['admin', 'trainer', 'member'],
         default: 'member'
+    },
+    gender: {
+        type: String,
+        required: [true, 'Gender is required'],
+        enum: ['Male', 'Female', 'Others']
     }
 }, {
     timestamps: true

@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Trainer = require('../models/Trainer');
 const { sendCredentialsEmail } = require('../utils/sendEmail');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Get all users (Admins, Trainers, Members) with their roles
 // @route   GET /api/members
@@ -57,10 +59,12 @@ const getMembers = async (req, res) => {
                 const memberData = memberMap.get(userId);
                 return {
                     _id: memberData._id,
+                    user: userId,
                     name: user.name,
                     email: user.email,
                     role: user.role,
                     phone: memberData.phone || '',
+                    gender: user.gender || memberData.gender || '',
                     plan: memberData.plan || '',
                     status: memberData.status || 'active',
                     isActive: memberData.isActive,
@@ -77,10 +81,12 @@ const getMembers = async (req, res) => {
                 const trainerData = trainerMap.get(userId);
                 return {
                     _id: trainerData._id,
+                    user: userId,
                     name: user.name,
                     email: user.email,
                     role: user.role,
                     phone: trainerData.phone || '',
+                    gender: user.gender || '',
                     plan: '',
                     status: 'active',
                     isActive: true,
@@ -93,10 +99,12 @@ const getMembers = async (req, res) => {
             } else if (user.role === 'admin') {
                 return {
                     _id: user._id,
+                    user: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
                     phone: '',
+                    gender: user.gender || '',
                     plan: '',
                     status: 'active',
                     isActive: true,
@@ -111,10 +119,12 @@ const getMembers = async (req, res) => {
             // Fallback for users without role-specific data
             return {
                 _id: user._id,
+                user: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
                 phone: '',
+                gender: user.gender || '',
                 plan: '',
                 status: 'active',
                 isActive: true,
@@ -128,22 +138,25 @@ const getMembers = async (req, res) => {
 
         // Apply status filter if provided
         let filteredUsers = usersWithDetails;
-        if (status && ['active', 'inactive', 'expired', 'pending'].includes(status)) {
-            if (status === 'expired') {
-                filteredUsers = usersWithDetails.filter(u => u.role === 'member' && !u.isActive);
-            } else if (status === 'active') {
-                // Include if status is explicitly active (case-insensitive)
-                // OR if status is NOT inactive/pending AND membership is active
-                filteredUsers = usersWithDetails.filter(u => {
-                    const s = (u.status || '').toLowerCase();
-                    if (s === 'active') return true;
-                    if (s === 'inactive' || s === 'pending') return false;
-                    return u.isActive !== false; // Fallback for undefined status
-                });
-            } else if (status === 'inactive') {
-                filteredUsers = usersWithDetails.filter(u => (u.status || '').toLowerCase() === 'inactive');
-            } else if (status === 'pending') {
-                filteredUsers = usersWithDetails.filter(u => (u.status || '').toLowerCase() === 'pending');
+        if (status) {
+            const lowerStatus = status.toLowerCase();
+            if (['active', 'deactive', 'expired', 'pending'].includes(lowerStatus)) {
+                if (lowerStatus === 'expired') {
+                    filteredUsers = usersWithDetails.filter(u => u.role === 'member' && !u.isActive);
+                } else if (lowerStatus === 'active') {
+                    // Include if status is explicitly active (case-insensitive)
+                    // OR if status is NOT Deactive/pending AND membership is active
+                    filteredUsers = usersWithDetails.filter(u => {
+                        const s = (u.status || '').toLowerCase();
+                        if (s === 'active') return true;
+                        if (s === 'deactive' || s === 'pending') return false;
+                        return u.isActive !== false; // Fallback for undefined status
+                    });
+                } else if (lowerStatus === 'deactive') {
+                    filteredUsers = usersWithDetails.filter(u => (u.status || '').toLowerCase() === 'deactive');
+                } else if (lowerStatus === 'pending') {
+                    filteredUsers = usersWithDetails.filter(u => (u.status || '').toLowerCase() === 'pending');
+                }
             }
         }
 
@@ -178,7 +191,7 @@ const generatePassword = () => {
 // @access  Protected (Admin only)
 const createMember = async (req, res) => {
     try {
-        const { name, email, phone, role, membershipStartDate, membershipEndDate, plan, status, nextBillingDate, class: className, classType, difficultyLevel, age, weight } = req.body;
+        const { name, email, phone, gender, role, membershipStartDate, membershipEndDate, plan, status, nextBillingDate, class: className, classType, difficultyLevel, age, weight } = req.body;
 
         // Validate required fields
         if (!name || !email) {
@@ -255,7 +268,8 @@ const createMember = async (req, res) => {
             email: email.toLowerCase(),
             phone: phone || '',
             password: generatedPassword,
-            role: userRole
+            role: userRole,
+            gender
         });
 
         let createdRecord = null;
@@ -275,6 +289,7 @@ const createMember = async (req, res) => {
                     name,
                     email: email.toLowerCase(),
                     phone,
+                    gender,
                     age: age ? parseInt(age) : undefined,
                     weight: weight ? parseFloat(weight) : undefined,
                     membershipStartDate: startDate,
@@ -416,7 +431,7 @@ const getMemberProfile = async (req, res) => {
 const updateMember = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, phone, membershipStartDate, membershipEndDate, plan, status, nextBillingDate, class: className, classType, difficultyLevel, age, weight } = req.body;
+        const { name, email, phone, gender, membershipStartDate, membershipEndDate, plan, status, nextBillingDate, class: className, classType, difficultyLevel, age, weight } = req.body;
 
         let user = await User.findById(id);
         let member = null;
@@ -489,6 +504,7 @@ const updateMember = async (req, res) => {
             if (name) user.name = name;
             if (email) user.email = email.toLowerCase();
             if (phone) user.phone = phone; // Phone is stored in User too
+            if (gender) user.gender = gender;
             await user.save();
         }
 
@@ -497,6 +513,7 @@ const updateMember = async (req, res) => {
             if (name) member.name = name; // Sync name
             if (email) member.email = email.toLowerCase(); // Sync email
             if (phone) member.phone = phone;
+            if (gender) member.gender = gender;
             if (age !== undefined) member.age = age ? parseInt(age) : null;
             if (weight !== undefined) member.weight = weight ? parseFloat(weight) : null;
             if (membershipStartDate) member.membershipStartDate = new Date(membershipStartDate);
@@ -620,12 +637,13 @@ const updateMemberProfile = async (req, res) => {
             });
         }
 
-        const { name, email, phone, age, weight } = req.body;
+        const { name, email, phone, age, weight, gender } = req.body;
 
         // Update fields
         if (name) member.name = name;
         if (email) member.email = email.toLowerCase();
         if (phone) member.phone = phone;
+        if (gender) member.gender = gender;
         if (age !== undefined) member.age = age ? parseInt(age) : null;
         if (weight !== undefined) member.weight = weight ? parseFloat(weight) : null;
 
@@ -636,6 +654,7 @@ const updateMemberProfile = async (req, res) => {
             const userUpdate = {};
             if (name) userUpdate.name = name;
             if (email) userUpdate.email = email.toLowerCase();
+            if (gender) userUpdate.gender = gender;
 
             if (Object.keys(userUpdate).length > 0) {
                 await User.findByIdAndUpdate(member.user, userUpdate);

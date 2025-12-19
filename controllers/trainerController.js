@@ -71,7 +71,7 @@ const getTrainer = async (req, res) => {
 // @access  Admin
 const createTrainer = async (req, res) => {
     try {
-        const { name, email, phone, specialization, bio, experience } = req.body;
+        const { name, email, phone, gender, specialization, bio, experience } = req.body;
 
         if (!name || !email || !phone) {
             return res.status(400).json({
@@ -95,7 +95,8 @@ const createTrainer = async (req, res) => {
             email: email.toLowerCase(),
             phone,
             password: 'password123', // Default password
-            role: 'trainer'
+            role: 'trainer',
+            gender
         });
 
         // Create Trainer profile
@@ -137,7 +138,7 @@ const updateTrainer = async (req, res) => {
             });
         }
 
-        const { name, email, phone, specialization, bio, experience } = req.body;
+        const { name, email, phone, gender, specialization, bio, experience } = req.body;
 
         // Update fields
         if (name) trainer.name = name;
@@ -154,6 +155,7 @@ const updateTrainer = async (req, res) => {
             const userUpdate = {};
             if (name) userUpdate.name = name;
             if (email) userUpdate.email = email.toLowerCase();
+            if (gender) userUpdate.gender = gender; // Add gender update for User
 
             if (Object.keys(userUpdate).length > 0) {
                 await User.findByIdAndUpdate(trainer.user, userUpdate);
@@ -267,9 +269,6 @@ const getTrainerClasses = async (req, res) => {
     }
 };
 
-// @desc    Update current trainer profile
-// @route   PUT /api/trainers/profile
-// @access  Trainer
 const updateTrainerProfile = async (req, res) => {
     try {
         const trainer = await Trainer.findOne({ user: req.user.id });
@@ -281,7 +280,7 @@ const updateTrainerProfile = async (req, res) => {
             });
         }
 
-        const { name, email, phone, specialization, bio, experience } = req.body;
+        const { name, email, phone, gender, specialization, bio, experience } = req.body;
 
         // Update fields
         if (name) trainer.name = name;
@@ -298,6 +297,7 @@ const updateTrainerProfile = async (req, res) => {
             const userUpdate = {};
             if (name) userUpdate.name = name;
             if (email) userUpdate.email = email.toLowerCase();
+            if (gender) userUpdate.gender = gender;
 
             if (Object.keys(userUpdate).length > 0) {
                 await User.findByIdAndUpdate(trainer.user, userUpdate);

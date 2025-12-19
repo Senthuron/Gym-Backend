@@ -17,6 +17,7 @@ const register = async (req, res) => {
             password,
             confirmPassword,
             role,
+            gender,
             // Trainee-specific fields
             membershipStartDate,
             membershipEndDate,
@@ -100,7 +101,8 @@ const register = async (req, res) => {
             email: email.toLowerCase(),
             phone,
             password,
-            role: userRole
+            role: userRole,
+            gender
         });
 
         // If trainee, create member record with auto-calculated next billing date
@@ -115,6 +117,7 @@ const register = async (req, res) => {
                     name,
                     email: email.toLowerCase(),
                     phone,
+                    gender,
                     age: age ? parseInt(age) : undefined,
                     weight: weight ? parseFloat(weight) : undefined,
                     membershipStartDate: startDate,
