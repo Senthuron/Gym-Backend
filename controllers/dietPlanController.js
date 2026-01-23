@@ -1,4 +1,6 @@
 const DietPlan = require('../models/DietPlan');
+const socketUtils = require('../utils/socket');
+
 
 // @desc    Create a new diet plan
 // @route   POST /api/diet-plans
@@ -22,6 +24,13 @@ const createDietPlan = async (req, res) => {
             success: true,
             data: dietPlan
         });
+
+        // Emit real-time notification to trainee
+        socketUtils.emitToUser(traineeId.toString(), 'new_diet_plan', {
+            message: `A new diet plan "${title}" has been created for you!`,
+            planId: dietPlan._id
+        });
+
     } catch (error) {
         console.error('Create diet plan error:', error);
         res.status(500).json({
@@ -139,6 +148,13 @@ const updateDietPlan = async (req, res) => {
             success: true,
             data: dietPlan
         });
+
+        // Emit real-time notification to trainee
+        socketUtils.emitToUser(dietPlan.traineeId.toString(), 'update_diet_plan', {
+            message: `Your diet plan "${dietPlan.title}" has been updated.`,
+            planId: dietPlan._id
+        });
+
     } catch (error) {
         console.error('Update diet plan error:', error);
         res.status(500).json({

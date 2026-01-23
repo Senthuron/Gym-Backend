@@ -34,6 +34,7 @@ const getEmployees = async (req, res) => {
                     baseSalary: 0,
                     status: 'Active',
                     user: user._id,
+                    gender: user.gender || 'Others',
                     specialization: trainer.specialization,
                     bio: trainer.bio,
                     experience: trainer.experience
@@ -108,9 +109,9 @@ const getEmployee = async (req, res) => {
 // @access  Admin
 const createEmployee = async (req, res) => {
     try {
-        const { name, email, phone, role, salaryType, baseSalary, status, joiningDate, specialization, bio, experience } = req.body;
+        const { name, email, phone, role, gender, salaryType, baseSalary, status, joiningDate, specialization, bio, experience } = req.body;
 
-        if (!name || !email || !phone || !role || !salaryType || !baseSalary) {
+        if (!name || !email || !phone || !role || !gender || !salaryType || !baseSalary) {
             return res.status(400).json({
                 success: false,
                 message: 'Please provide all required fields'
@@ -132,6 +133,7 @@ const createEmployee = async (req, res) => {
             email: email.toLowerCase(),
             phone,
             role,
+            gender,
             salaryType,
             baseSalary,
             status: status || 'Active',
@@ -140,6 +142,7 @@ const createEmployee = async (req, res) => {
             bio,
             experience
         });
+        console.log(employee)
 
         // If role is Trainer, Reception, or Manager, create/link a User account
         if (['Trainer', 'Reception', 'Manager'].includes(role)) {
@@ -149,6 +152,7 @@ const createEmployee = async (req, res) => {
                     name,
                     email: email.toLowerCase(),
                     phone,
+                    gender,
                     password: 'password123', // Default password
                     role: role.toLowerCase()
                 });
@@ -193,7 +197,7 @@ const createEmployee = async (req, res) => {
 // @access  Admin
 const updateEmployee = async (req, res) => {
     try {
-        const { name, email, phone, role, specialization, bio, experience } = req.body;
+        const { name, email, phone, role, gender, specialization, bio, experience } = req.body;
         let employee = await Employee.findById(req.params.id);
 
         if (!employee) {
@@ -219,6 +223,7 @@ const updateEmployee = async (req, res) => {
                 if (email) user.email = email.toLowerCase();
                 if (phone) user.phone = phone;
                 if (role) user.role = role.toLowerCase();
+                if (gender) user.gender = gender;
                 await user.save();
             } else if (['Trainer', 'Reception', 'Manager'].includes(employee.role)) {
                 // Create user if it doesn't exist but role requires it
@@ -226,6 +231,7 @@ const updateEmployee = async (req, res) => {
                     name: employee.name,
                     email: employee.email,
                     phone: employee.phone,
+                    gender: employee.gender,
                     password: 'password123',
                     role: employee.role.toLowerCase()
                 });

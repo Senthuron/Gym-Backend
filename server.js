@@ -105,9 +105,16 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const http = require('http');
+const socketUtils = require('./utils/socket');
+
+const server = http.createServer(app);
+socketUtils.init(server);
+
+server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
 
 module.exports = app;

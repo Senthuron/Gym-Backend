@@ -2,6 +2,8 @@ const Feedback = require('../models/Feedback');
 const Trainer = require('../models/Trainer');
 const Session = require('../models/Session');
 const User = require('../models/User');
+const socketUtils = require('../utils/socket');
+
 
 // @desc    Create new feedback
 // @route   POST /api/feedback
@@ -46,6 +48,21 @@ const createFeedback = async (req, res) => {
             success: true,
             data: feedback
         });
+
+        // Emit real-time notification
+        if (type === 'TRAINER' && trainerId) {
+            socketUtils.emitToUser(trainerId.toString(), 'new_feedback', {
+                message: 'You have received new feedback!',
+                type: 'TRAINER'
+            });
+        } else if (type === 'CLASS') {
+            // Notify admins about class feedback
+            socketUtils.emitToAll('new_class_feedback', {
+                message: 'New class feedback submitted',
+                classId
+            });
+        }
+
     } catch (error) {
         console.error('Create feedback error:', error);
         res.status(500).json({

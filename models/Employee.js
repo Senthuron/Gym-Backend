@@ -16,6 +16,11 @@ const employeeSchema = new mongoose.Schema({
         required: [true, 'Role is required'],
         enum: ['Trainer', 'Reception', 'Manager', 'Cleaner']
     },
+    gender: {
+        type: String,
+        required: [true, 'Gender is required'],
+        enum: ['Male', 'Female', 'Others']
+    },
     phone: {
         type: String,
         required: [true, 'Phone is required'],

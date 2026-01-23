@@ -1,20 +1,17 @@
 const createTransporter = require('../config/email');
 
-/**
- * Send OTP email to user
- * @param {string} email - Recipient email
- * @param {string} otp - 6-digit OTP code
- * @returns {Promise} - Email send result
- */
-const sendOTPEmail = async (email, otp) => {
-    try {
-        const transporter = createTransporter();
 
-        const mailOptions = {
-            from: process.env.EMAIL_FROM || 'GymMini <noreply@gymmini.com>',
-            to: email,
-            subject: 'Password Reset OTP - GymMini',
-            html: `
+// Send OTP email to user
+
+const sendOTPEmail = async (email, otp) => {
+  try {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'GymMini <noreply@gymmini.com>',
+      to: email,
+      subject: 'Password Reset OTP - GymMini',
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -35,12 +32,12 @@ const sendOTPEmail = async (email, otp) => {
             }
             .header {
               text-align: center;
-              color: #4CAF50;
+              color: #6a706aff;
               margin-bottom: 30px;
             }
             .otp-box {
-              background-color: #4CAF50;
-              color: white;
+              background-color: #f7f7f7ff;
+              color: black;
               font-size: 32px;
               font-weight: bold;
               text-align: center;
@@ -101,15 +98,15 @@ const sendOTPEmail = async (email, otp) => {
         </body>
         </html>
       `
-        };
+    };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Email sent:', info.messageId);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error('❌ Email send error:', error);
-        throw new Error('Failed to send email');
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Email send error:', error);
+    throw new Error('Failed to send email');
+  }
 };
 
 /**
@@ -121,20 +118,20 @@ const sendOTPEmail = async (email, otp) => {
  * @returns {Promise} - Email send result
  */
 const sendCredentialsEmail = async (email, name, password, role) => {
-    try {
-        const transporter = createTransporter();
+  try {
+    const transporter = createTransporter();
 
-        const roleDisplay = {
-            'admin': 'Administrator',
-            'trainer': 'Trainer',
-            'member': 'Trainee'
-        }[role] || role;
+    const roleDisplay = {
+      'admin': 'Administrator',
+      'trainer': 'Trainer',
+      'member': 'Trainee'
+    }[role] || role;
 
-        const mailOptions = {
-            from: process.env.EMAIL_FROM || 'GymMini <noreply@gymmini.com>',
-            to: email,
-            subject: `Welcome to GymMini - Your ${roleDisplay} Account`,
-            html: `
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'GymMini <noreply@gymmini.com>',
+      to: email,
+      subject: `Welcome to GymMini - Your ${roleDisplay} Account`,
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -254,15 +251,15 @@ const sendCredentialsEmail = async (email, name, password, role) => {
         </body>
         </html>
       `
-        };
+    };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Credentials email sent:', info.messageId);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error('❌ Email send error:', error);
-        throw new Error('Failed to send credentials email');
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Credentials email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Email send error:', error);
+    throw new Error('Failed to send credentials email');
+  }
 };
 
 module.exports = { sendOTPEmail, sendCredentialsEmail };

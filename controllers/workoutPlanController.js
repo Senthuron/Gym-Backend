@@ -1,4 +1,6 @@
 const WorkoutPlan = require('../models/WorkoutPlan');
+const socketUtils = require('../utils/socket');
+
 
 // @desc    Create a new workout plan
 // @route   POST /api/workout-plans
@@ -21,6 +23,13 @@ const createWorkoutPlan = async (req, res) => {
             success: true,
             data: workoutPlan
         });
+
+        // Emit real-time notification to trainee
+        socketUtils.emitToUser(traineeId.toString(), 'new_workout_plan', {
+            message: `A new workout plan "${title}" has been created for you!`,
+            planId: workoutPlan._id
+        });
+
     } catch (error) {
         console.error('Create workout plan error:', error);
         res.status(500).json({
@@ -48,6 +57,9 @@ const getWorkoutPlans = async (req, res) => {
             .populate('trainerId', 'name email')
             .populate('traineeId', 'name email')
             .sort({ createdAt: -1 });
+        socketUtils.emitToUser(req.user.id, 'workout_plans', {
+            workoutPlans
+        })
 
         res.status(200).json({
             success: true,
@@ -138,6 +150,13 @@ const updateWorkoutPlan = async (req, res) => {
             success: true,
             data: workoutPlan
         });
+
+        // Emit real-time notification to trainee
+        socketUtils.emitToUser(workoutPlan.traineeId.toString(), 'update_workout_plan', {
+            message: `Your workout plan "${workoutPlan.title}" has been updated.`,
+            planId: workoutPlan._id
+        });
+
     } catch (error) {
         console.error('Update workout plan error:', error);
         res.status(500).json({
