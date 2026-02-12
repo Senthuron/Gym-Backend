@@ -1,261 +1,192 @@
 # GymMini Backend
 
-A complete backend API for **GymMini** – a micro-SaaS gym management system for gyms and fitness centers.
 
-This service provides user management, membership tracking, class/session scheduling, attendance, dashboards, trainers and employees, diet/workout plans, feedback collection, real-time updates, and email-based flows (including password reset).
 
----
+A robust, feature-rich backend API for **GymMini** - a modern, micro-SaaS gym management system. Built with Node.js, Express, and MongoDB, it powers real-time interactions, role-based access control, and comprehensive gym operations.
 
-## Table of Contents
+## 🌟 Key Features
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture & Project Structure](#architecture--project-structure)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Configuration](#environment-configuration)
-  - [Database Seeding](#database-seeding)
-  - [Running the Server](#running-the-server)
-- [Environment Variables](#environment-variables)
-- [API Overview](#api-overview)
-- [Authentication & Authorization](#authentication--authorization)
-- [Data Models Overview](#data-models-overview)
-- [Real‑Time Features (Socket.io)](#real-time-features-socketio)
-- [Email & Password Reset](#email--password-reset)
-- [Testing & API Exploration](#testing--api-exploration)
-- [Contributing & Conventions](#contributing--conventions)
-- [License](#license)
+### 👥 User Management
+- **Role-Based Access Control (RBAC)**: Secure access for `Admin`, `Trainer`, and `Member` roles.
+- **Authentication**: JWT-based secure login and registration.
+- **OTP Verification**: Email-based OTP for password resets and verification.
 
----
+### 🏋️ Gym Operations
+- **Member Management**: Complete CRUD operations for gym members with search and filtering.
+- **Staff Management**: Manage Trainers and Employees (Receptionists, Cleaners, etc.).
+- **Session/Class Scheduling**: Schedule and manage gym classes with capacity limits.
+- **Attendance Tracking**:
+    - **Members**: Track attendance for classes and general gym visits.
+    - **Staff**: Daily attendance logging for trainers and employees.
 
-## Features
+### 🥗 Wellness & Plans
+- **Diet Plans**: Trainers can assign personalized diet plans to members.
+- **Workout Plans**: Custom workout routines created by trainers for members.
 
-- **Role-Based Authentication & Authorization**
-  - JWT-based login and protected routes.
-  - Roles: `admin`, `trainer`, `member` (and internal `employee` model).
-  - Middleware-based access control (admin-only, trainer-only, member-only).
+### 💬 Engagement & Analytics
+- **Feedback System**: Members can rate trainers and classes.
+- **Real-Time Notifications**: Powered by `Socket.io` for instant updates on feedback and assignments.
+- **Dashboard Analytics**: detailed insights on members, revenue, and attendance trends.
 
-- **User, Member, Trainer & Employee Management**
-  - CRUD for members, trainers, and employees.
-  - Separate profile and role handling via shared `User` model.
-  - Search and filtering for members and sessions.
+## 🛠️ Technology Stack
 
-- **Session & Class Scheduling**
-  - Create, update, cancel gym classes/sessions.
-  - Filter sessions (by trainer, date, status, etc.).
+- **Runtime**: [Node.js](https://nodejs.org/)
+- **Framework**: [Express.js](https://expressjs.com/)
+- **Database**: [MongoDB](https://www.mongodb.com/) (Mongoose ODM)
+- **Authentication**: JWT, bcryptjs
+- **Validation**: [Zod](https://zod.dev/) & express-validator
+- **Real-Time**: [Socket.io](https://socket.io/)
+- **Email Service**: Nodemailer
+- **Environment**: Dotenv
 
-- **Attendance Tracking**
-  - Member attendance per session.
-  - Employee attendance with dedicated model and routes.
-
-- **Diet & Workout Plans**
-  - Manage diet plans and workout plans assigned to members.
-
-- **Feedback System**
-  - Collect feedback from users/members for the gym or services.
-
-- **Dashboard & Analytics**
-  - Key dashboard stats for admins.
-  - Metrics such as active members, expiring memberships, weekly sessions, and attendance summaries.
-
-- **Email Integration**
-  - OTP and password reset emails.
-  - Sending credentials and important notifications.
-
-- **Real-Time Communication (Socket.io)**
-  - Socket.io server initialized alongside HTTP server.
-  - User-specific rooms and broadcasting capabilities.
-
----
-
-## Tech Stack
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with **Mongoose** ODM
-- **Authentication**: JWT (jsonwebtoken)
-- **Password Hashing**: bcryptjs
-- **Validation**:
-  - **Zod** (primary) – via centralized validators.
-  - `express-validator` (legacy, used in some endpoints).
-- **Real-Time**: Socket.io
-- **Email**: Nodemailer
-- **Config & Environment**: dotenv
-- **CORS**: cors
-- **Development**: nodemon
-
-All versions and scripts are defined in `package.json`.
-
----
-
-## Architecture & Project Structure
-
-The codebase follows a clear **MVC-style** layout with dedicated layers for models, controllers, routes, middleware, validation, and utilities.
+## 📂 Project Structure
 
 ```bash
 gym-backend/
-├── config/              # Database and email configuration
-├── controllers/         # Business logic (auth, members, sessions, dashboards, etc.)
-├── middleware/          # Auth & validation middleware
-├── models/              # Mongoose schemas (User, Member, Trainer, etc.)
-├── routes/              # Express route definitions
-├── utils/               # Utility scripts (seeding, email, socket, migrations)
-├── validators/          # Zod-based validation schemas
-├── .env.example         # Example env configuration
-└── server.js            # Application entry point
+├── config/          # Database connection logic
+├── controllers/     # Application logic (the "Brain")
+├── middleware/      # Auth checks, validation, error handling
+├── models/          # Mongoose database schemas
+├── routes/          # API endpoint definitions
+├── utils/           # Helper functions (Email, Socket, Seeding)
+├── validators/      # Zod/Express validators
+└── server.js        # Entry point
 ```
 
-- **`server.js`**
-  - Loads environment variables.
-  - Connects to MongoDB (`config/database.js`).
-  - Sets up Express, CORS, JSON parsing.
-  - Registers all route modules under `/api`.
-  - Initializes Socket.io and binds it to the HTTP server.
-
-- **`config/`**
-  - `database.js`: Central MongoDB connection based on `MONGODB_URI`.
-  - `email.js`: Nodemailer transporter configured via environment variables.
-
-- **`controllers/`**
-  - `authController`, `memberController`, `sessionController`, `attendanceController`,
-    `dashboardController`, `trainerController`, `userController`, `employeeController`,
-    `employeeAttendanceController`, `dietPlanController`, `workoutPlanController`,
-    `feedbackController`, etc.
-
-- **`models/`**
-  - `User`, `Admin`, `Member`, `Trainer`, `Employee`,
-    `Session`, `Attendance`, `EmployeeAttendance`,
-    `DietPlan`, `WorkoutPlan`, `Feedback`, `OTP`.
-
-- **`middleware/`**
-  - `auth.js`: JWT verification and role-based guards.
-  - `validate.js`: Zod-based request validation integration.
-
-- **`validators/`**
-  - Zod schemas for auth, members, sessions, trainers, etc.
-
-- **`utils/`**
-  - `seedAdmin.js`: Creates default admin and test user accounts.
-  - `sendEmail.js`: Helper to send emails using Nodemailer.
-  - `socket.js`: Socket.io initialization and event handling.
-  - `migrateToUsers.js`: Migration utility (see `USER_STORAGE_FIX.md`).
-
----
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- **Node.js** v14+ (LTS recommended).
-- **MongoDB** (local instance or remote cluster).
+- **Node.js** (v14 or higher)
+- **MongoDB** (Local instance or Atlas URI)
+- **npm** or **yarn**
 
 ### Installation
 
-```bash
-git clone <your-repo-url>
-cd Gym-Backend
-npm install
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/gym-backend.git
+    cd gym-backend
+    ```
 
-> Adjust the folder name/path as appropriate if your local directory differs.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-### Environment Configuration
+3.  **Configure Environment Variables:**
+    Create a `.env` file in the root directory (copy from `.env.example`):
+    ```bash
+    cp .env.example .env
+    ```
+    Update the values in `.env`:
+    ```env
+    PORT=5000
+    NODE_ENV=development
+    MONGODB_URI=mongodb://localhost:27017/gymmini # Or your Atlas URI
+    JWT_SECRET=your_super_secure_secret
+    JWT_EXPIRES_IN=7d
+    
+    # Admin Seed Credentials
+    ADMIN_EMAIL=admin@gymmini.com
+    ADMIN_PASSWORD=admin123
 
-1. Create a new `.env` file from the example:
+    # Email Service (Gmail Example)
+    EMAIL_SERVICE=gmail
+    EMAIL_USER=your-email@gmail.com
+    EMAIL_PASSWORD=your-app-specific-password
+    ```
 
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Open `.env` and set values for:
-   - MongoDB URI (`MONGODB_URI`)
-   - JWT secret (`JWT_SECRET`)
-   - Email credentials (`EMAIL_SERVICE`, `EMAIL_USER`, `EMAIL_PASSWORD`)
-   - Allowed frontend origins (`FRONTEND_URL`)
-   - Any other environment variables described below.
-
-### Database Seeding
-
-To create a default admin and test user:
-
-```bash
-npm run seed
-```
-
-This uses the values from your `.env` (see **Default Credentials** below).
+4.  **Seed Database (Optional):**
+    Create an initial Admin account:
+    ```bash
+    npm run seed
+    ```
 
 ### Running the Server
 
-**Development mode** (with auto-reload via nodemon):
+-   **Development Mode** (with Nodemon):
+    ```bash
+    npm run dev
+    ```
+-   **Production Mode**:
+    ```bash
+    npm start
+    ```
 
-```bash
-npm run dev
-```
+Server will run on `http://localhost:5000` by default.
 
-**Production mode**:
+## 📚 API Documentation
 
-```bash
-npm start
-```
+Base URL: `/api`
 
-By default the server listens on:
+### 🔐 Authentication (`/api/auth`)
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/register` | Register a new user |
+| `POST` | `/login` | User login (returns JWT) |
+| `POST` | `/forgot-password` | Request password reset OTP |
+| `POST` | `/reset-password` | Reset password using OTP |
 
-```text
-http://localhost:5000
-```
+### 👤 Members (`/api/members`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | Admin/Trainer | Get all members (supports query params) |
+| `POST` | `/` | Admin | Create a new member |
+| `GET` | `/:id` | Admin/Trainer/Owner | Get specific member details |
+| `PUT` | `/:id` | Admin | Update member details |
+| `DELETE` | `/:id` | Admin | Delete a member |
 
-You can change the port via the `PORT` environment variable.
+### 🏋️ Sessions (`/api/sessions`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | Auth Users | List all gym sessions |
+| `POST` | `/` | Admin/Trainer | Create a new session |
+| `PUT` | `/:id` | Admin/Trainer | Update session details |
+| `PUT` | `/:id/cancel` | Admin/Trainer | Cancel a session |
 
----
+### 📝 Attendance (`/api/attendance`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/` | Admin/Trainer | Mark member attendance |
+| `GET` | `/session/:id` | Auth Users | Get attendance list for a session |
 
-## Environment Variables
+### 📊 Dashboard (`/api/dashboard`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/stats` | Admin | Get high-level gym statistics |
+| `GET` | `/chart-data` | Admin | Get data for dashboard charts |
 
-All configuration is driven via `.env`. Use `.env.example` as a template.
+### 👔 Employees & Trainers
+- **Employees**: `/api/employees` - CRUD for gym staff.
+- **Trainers**: `/api/trainers` - CRUD for trainers.
+- **Staff Attendance**: `/api/employee-attendance` - Track staff check-ins.
 
-Common variables include:
+### 🥗 Health Plans
+- **Diet Plans**: `/api/diet-plans` - Assign/View diet plans.
+- **Workout Plans**: `/api/workout-plans` - Assign/View workout routines.
 
-```env
-PORT=5000
-NODE_ENV=development
+### 💬 Feedback (`/api/feedback`)
+- `POST /` - Submit feedback for a class or trainer.
+- `GET /` - View feedback (filtered by role).
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/gymmini
+## ⚡ Socket.io Events
 
-# JWT
-JWT_SECRET=your_secret_key
-JWT_EXPIRES_IN=7d
+The backend emits real-time events for live updates:
 
-# Default seed users
-ADMIN_EMAIL=admin@gymmini.com
-ADMIN_PASSWORD=admin123
+| Event Name | emitted To | Description |
+| :--- | :--- | :--- |
+| `new_feedback` | Specific Trainer | Notification when a trainer receives feedback. |
+| `new_class_feedback` | All (Admins) | Notification when a class receives feedback. |
+| `join` | Server | Client event to join a user-specific room. |
 
-# Email / SMTP
-EMAIL_SERVICE=gmail
-EMAIL_USER=your_email@example.com
-EMAIL_PASSWORD=your_email_app_password
+## 🧪 Testing
 
-# Frontend integration / CORS
-FRONTEND_URL=http://localhost:3000,http://localhost:3001
-```
-
-> Only set the values you actually use. Refer to `EMAIL_SETUP_GUIDE.md` and `.env.example` for the full set and details.
-
----
-
-## API Overview
-
-- **Base URL**: `http://localhost:5000/api`
-
-Core route groups:
-
-- **Auth** – `/api/auth`
-  - Login, registration, logout.
-  - OTP-based password reset flow.
-
-- **Members** – `/api/members`
-  - CRUD for gym members.
-  - Searching and filtering.
+You can test the API using Postman or cURL.
+There are helpful markdown guides included in this repo for specific flows:
+- `POSTMAN_GUIDE.md`
+- `EMAIL_SETUP_GUIDE.md`
+- `ROLE_BASED_AUTH.md`
+>>>>>>> e8f904f0753b16672dc438df8bbb41b5587f12f1
 
 - **Trainers** – `/api/trainers`
   - CRUD operations for trainers and related info.
@@ -433,8 +364,4 @@ If you add new modules:
 
 ## License
 
-ISC
-
----
-
-Built with ❤️ for GymMini
+This project is licensed under the ISC License.
